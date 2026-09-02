@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Đọc barcode vé</title>
+
+  <script src="https://unpkg.com/@zxing/browser@latest"></script>
+
+  <style>
+    body {
+      font-family: Arial;
+      text-align: center;
+      padding: 20px;
+    }
+
+    video {
+      width: 100%;
+      max-width: 500px;
+      border: 2px solid #333;
+      border-radius: 10px;
+    }
+
+    #result {
+      margin-top: 20px;
+      font-size: 30px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+
+<h2>Barcode Scanner</h2>
+
+<video id="video" autoplay muted playsinline></video>
+
+<div id="result">
+  Đang quét...
+</div>
+
+<script>
+
+const video = document.getElementById("video");
+const result = document.getElementById("result");
+
+const reader = new ZXingBrowser.BrowserMultiFormatReader();
+
+async function startScanner() {
+
+  const devices =
+    await ZXingBrowser.BrowserCodeReader.listVideoInputDevices();
+
+  if (!devices.length) {
+    result.textContent = "Không tìm thấy camera";
+    return;
+  }
+
+  // Camera sau
+  const deviceId = devices[devices.length - 1].deviceId;
+
+  reader.decodeFromVideoDevice(
+    deviceId,
+    video,
+    (decoded, error) => {
+
+      if (decoded) {
+
+        let code = decoded.getText();
+
+        console.log("Barcode:", code);
+
+        // Hiển thị barcode
+        result.textContent = code;
+
+        // Dừng camera
+        reader.reset();
+      }
+
+    }
+  );
+}
+
+startScanner();
+
+</script>
+
+</body>
+</html>
