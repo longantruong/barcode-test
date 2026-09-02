@@ -27,6 +27,13 @@
       font-size: 30px;
       font-weight: bold;
     }
+
+    #resetButton {
+      margin-top: 16px;
+      padding: 10px 18px;
+      font-size: 16px;
+      cursor: pointer;
+    }
   </style>
 </head>
 
@@ -40,47 +47,68 @@
   Đang quét...
 </div>
 
+<button id="resetButton" type="button" disabled>Quét mã khác</button>
+
 <script>
 
 const video = document.getElementById("video");
 const result = document.getElementById("result");
+const resetButton = document.getElementById("resetButton");
 
 const reader = new ZXingBrowser.BrowserMultiFormatReader();
+let isScanning = false;
 
 async function startScanner() {
 
-  const devices =
-    await ZXingBrowser.BrowserCodeReader.listVideoInputDevices();
+  if (isScanning) return;
 
-  if (!devices.length) {
-    result.textContent = "Không tìm thấy camera";
-    return;
-  }
+  isScanning = true;
+  resetButton.disabled = true;
+  result.textContent = "Đang quét...";
 
-  // Camera sau
-  const deviceId = devices[devices.length - 1].deviceId;
+  try {
+    const devices =
+      await ZXingBrowser.BrowserCodeReader.listVideoInputDevices();
 
-  reader.decodeFromVideoDevice(
-    deviceId,
-    video,
-    (decoded, error) => {
-
-      if (decoded) {
-
-        let code = decoded.getText();
-
-        console.log("Barcode:", code);
-
-        // Hiển thị barcode
-        result.textContent = code;
-
-        // Dừng camera
-        reader.reset();
-      }
-
+    if (!devices.length) {
+      result.textContent = "Không tìm thấy camera";
+      isScanning = false;
+      return;
     }
-  );
+
+    // Camera sau
+    const deviceId = devices[devices.length - 1].deviceId;
+
+    reader.decodeFromVideoDevice(
+      deviceId,
+      video,
+      (decoded, error) => {
+
+        if (decoded) {
+
+          let code = decoded.getText();
+
+          console.log("Barcode:", code);
+
+          // Hiển thị barcode
+          result.textContent = code;
+
+          // Dừng camera
+          reader.reset();
+          isScanning = false;
+          resetButton.disabled = false;
+        }
+
+      }
+    );
+  } catch (error) {
+    console.error(error);
+    result.textContent = "Không thể mở camera";
+    isScanning = false;
+  }
 }
+
+resetButton.addEventListener("click", startScanner);
 
 startScanner();
 
