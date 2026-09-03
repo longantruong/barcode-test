@@ -219,7 +219,7 @@ async function startScanner() {
 
     } catch (error) {
 
-        console.error(error);
+        console.log(error);
 
         result.textContent =
             "Không thể mở camera";
@@ -286,8 +286,6 @@ sendButton.addEventListener("click", async () => {
 
     // ========================================
     // TẠO DATA GỬI API
-    //
-    // amount được lấy ngay lúc bấm Send
     // ========================================
 
     const data = {
@@ -309,6 +307,10 @@ sendButton.addEventListener("click", async () => {
     );
 
 
+    // ========================================
+    // DISABLE SEND
+    // ========================================
+
     sendButton.disabled = true;
 
     statusText.textContent =
@@ -316,6 +318,10 @@ sendButton.addEventListener("click", async () => {
 
 
     try {
+
+        // ========================================
+        // CALL API
+        // ========================================
 
         const response = await fetch(
             API_URL,
@@ -331,11 +337,15 @@ sendButton.addEventListener("click", async () => {
         );
 
 
+        // ========================================
+        // ĐỌC RESPONSE
+        // ========================================
+
         const responseText =
             await response.text();
 
 
-        let responseData;
+        let responseData = null;
 
 
         try {
@@ -351,20 +361,98 @@ sendButton.addEventListener("click", async () => {
 
 
         console.log(
+            "API status:",
+            response.status
+        );
+
+        console.log(
             "API response:",
             responseData
         );
 
 
         // ========================================
-        // API ERROR
+        // KIỂM TRA ERROR
+        //
+        // HTTP ERROR:
+        // response.ok === false
+        //
+        // HOẶC API TRẢ:
+        // { success: false }
         // ========================================
 
-        if (!response.ok) {
-
-            throw new Error(
-                `API Error ${response.status}: ${responseText}`
+        const apiError =
+            !response.ok ||
+            (
+                responseData &&
+                typeof responseData === "object" &&
+                responseData.success === false
             );
+
+
+        if (apiError) {
+
+            let errorMessage =
+                "Update thất bại.";
+
+
+            // ------------------------------------
+            // API trả JSON
+            // ------------------------------------
+
+            if (
+                responseData &&
+                typeof responseData === "object"
+            ) {
+
+                if (responseData.message) {
+
+                    errorMessage =
+                        responseData.message;
+
+                } else if (responseData.error) {
+
+                    errorMessage =
+                        responseData.error;
+                }
+            }
+
+
+            // ------------------------------------
+            // API trả TEXT
+            // ------------------------------------
+
+            else if (
+                typeof responseData === "string" &&
+                responseData.trim()
+            ) {
+
+                errorMessage =
+                    responseData;
+            }
+
+
+            console.log(
+                "API Error:",
+                response.status,
+                errorMessage
+            );
+
+
+            statusText.textContent =
+                "Gửi thất bại";
+
+
+            // ====================================
+            // SHOW ERROR DIALOG
+            // ====================================
+
+            showErrorDialog(
+                errorMessage
+            );
+
+
+            return;
         }
 
 
@@ -384,16 +472,35 @@ sendButton.addEventListener("click", async () => {
 
     } catch (error) {
 
-        console.error(
+        // ========================================
+        // NETWORK / CONNECTION ERROR
+        // ========================================
+
+        console.log(
             "Lỗi gửi API:",
             error
         );
+
 
         statusText.textContent =
             "Gửi thất bại";
 
 
+        // ========================================
+        // SHOW ERROR DIALOG
+        // ========================================
+
+        showErrorDialog(
+            "Không thể kết nối đến server.\n" +
+            "Vui lòng thử lại."
+        );
+
+
     } finally {
+
+        // ========================================
+        // ENABLE SEND LẠI
+        // ========================================
 
         sendButton.disabled = false;
     }
@@ -405,3 +512,43 @@ sendButton.addEventListener("click", async () => {
 // ========================================
 
 startScanner();
+
+// ========================================
+// ERROR DIALOG
+// ========================================
+
+const errorDialog =
+    document.getElementById("errorDialog");
+
+const errorDialogMessage =
+    document.getElementById("errorDialogMessage");
+
+const closeErrorDialog =
+    document.getElementById("closeErrorDialog");
+
+
+function showErrorDialog(message) {
+
+    if (!errorDialog || !errorDialogMessage) {
+        console.log("Không tìm thấy Error Dialog");
+        return;
+    }
+
+    errorDialogMessage.textContent = message;
+
+    if (!errorDialog.open) {
+        errorDialog.showModal();
+    }
+}
+
+
+if (closeErrorDialog && errorDialog) {
+
+    closeErrorDialog.addEventListener(
+        "click",
+        () => {
+            errorDialog.close();
+        }
+    );
+
+}
