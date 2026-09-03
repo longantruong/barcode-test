@@ -521,6 +521,8 @@ confirmSendButton.addEventListener(
 
             result.textContent = "";
 
+            resetAfterSuccess();
+
 
             console.log(
                 "Đã gửi thành công:",
@@ -649,4 +651,26 @@ if (closeSuccessDialog && successDialog) {
         }
     );
 
+}
+
+function resetAfterSuccess() {
+    // Xóa barcode hiện tại
+    barcodeData = "";
+
+    // Xóa kết quả hiển thị
+    result.textContent = "";
+
+    // Reset trạng thái
+    statusText.textContent = "Vui lòng quét barcode";
+
+    // Reset số đã chọn
+    selectedNumbers = [];
+
+    // Bỏ active các nút số
+    document.querySelectorAll(".number-button").forEach(button => {
+        button.classList.remove("active");
+    });
+
+    // Nếu có reset button thì disable lại
+    resetButton.disabled = true;
 }
