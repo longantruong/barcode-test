@@ -1,0 +1,200 @@
+ :root {
+     color: #172033;
+     background: #f4f7fb;
+     font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+ }
+
+ * {
+     box-sizing: border-box;
+ }
+
+ body {
+     min-height: 100vh;
+     margin: 0;
+     display: grid;
+     place-items: center;
+     padding: 14px 12px;
+     background:
+         radial-gradient(circle at top left, #dceaff 0, transparent 32%),
+         radial-gradient(circle at bottom right, #dff8ee 0, transparent 28%),
+         #f4f7fb;
+ }
+
+ .scanner-card {
+     position: relative;
+     width: min(100%, 390px);
+     padding: 48px 18px 18px;
+     text-align: center;
+     background: rgba(255, 255, 255, 0.92);
+     border: 1px solid rgba(255, 255, 255, 0.9);
+     border-radius: 20px;
+     box-shadow: 0 18px 50px rgba(31, 51, 89, 0.13);
+ }
+
+ #sendButton {
+     position: absolute;
+     top: 12px;
+     right: 12px;
+     padding: 7px 11px;
+     color: #3568e8;
+     font: inherit;
+     font-size: 12px;
+     font-weight: 700;
+     cursor: pointer;
+     border: 1px solid #cdd9f0;
+     border-radius: 8px;
+     background: #f7faff;
+ }
+
+ #sendButton:hover {
+     color: #fff;
+     border-color: #3568e8;
+     background: #3568e8;
+ }
+
+ .instruction {
+     margin: 0 0 12px;
+     color: #4e5d75;
+     font-size: 14px;
+     font-weight: 600;
+ }
+
+ .camera-frame {
+     position: relative;
+     overflow: hidden;
+     width: min(100%, 270px);
+     aspect-ratio: 8 / 3;
+     margin: 0 auto;
+     border: 1px solid #dde4f0;
+     border-radius: 14px;
+     background: #172033;
+     box-shadow: 0 8px 20px rgba(23, 32, 51, 0.14);
+ }
+
+ video {
+     width: 100%;
+     height: 100%;
+     display: block;
+     object-fit: cover;
+ }
+
+ .scan-line {
+     position: absolute;
+     z-index: 1;
+     top: 50%;
+     left: 12%;
+     width: 76%;
+     height: 2px;
+     border-radius: 99px;
+     background: #6ef2b2;
+     box-shadow: 0 0 12px #6ef2b2;
+     animation: scan 2.4s ease-in-out infinite;
+ }
+
+ @keyframes scan {
+     50% {
+         transform: translateY(-55px);
+     }
+ }
+
+ .status {
+     display: flex;
+     justify-content: center;
+     align-items: center;
+     gap: 8px;
+     margin: 11px 0 8px;
+     color: #68738a;
+     font-size: 13px;
+ }
+
+ .status-dot {
+     width: 8px;
+     height: 8px;
+     border-radius: 50%;
+     background: #2cc879;
+     box-shadow: 0 0 0 4px #e0f8eb;
+ }
+
+ #result {
+     min-height: 44px;
+     display: grid;
+     place-items: center;
+     padding: 10px 12px;
+     overflow-wrap: anywhere;
+     color: #234991;
+     font-size: 16px;
+     font-weight: 700;
+     letter-spacing: 0.01em;
+     border: 1px dashed #c9d5e9;
+     border-radius: 13px;
+     background: #f7faff;
+ }
+
+ #resetButton {
+     width: 100%;
+     margin-top: 10px;
+     padding: 10px 16px;
+     color: #fff;
+     font: inherit;
+     font-weight: 700;
+     cursor: pointer;
+     border: 0;
+     border-radius: 12px;
+     background: #3568e8;
+     box-shadow: 0 8px 16px rgba(53, 104, 232, 0.2);
+     transition: transform 0.15s ease, background 0.15s ease;
+ }
+
+ #resetButton:hover:not(:disabled) {
+     background: #2758d3;
+     transform: translateY(-1px);
+ }
+
+ #resetButton:disabled {
+     color: #8d9ab0;
+     cursor: not-allowed;
+     background: #e9eef6;
+     box-shadow: none;
+ }
+
+ .number-pad {
+     display: grid;
+     grid-template-columns: repeat(6, 1fr);
+     gap: 7px;
+     margin-top: 14px;
+ }
+
+ .number-button {
+     min-height: 35px;
+     padding: 0;
+     color: #4a5871;
+     font: inherit;
+     font-size: 13px;
+     font-weight: 700;
+     cursor: pointer;
+     border: 1px solid #dde4f0;
+     border-radius: 9px;
+     background: #fff;
+     transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+ }
+
+ .number-button:hover,
+ .number-button.active {
+     color: #fff;
+     border-color: #3568e8;
+     background: #3568e8;
+ }
+
+ .number-button:active {
+     transform: scale(0.95);
+ }
+
+ @media (max-width: 380px) {
+     .scanner-card {
+         padding: 15px;
+     }
+
+     .number-pad {
+         gap: 5px;
+     }
+ }
