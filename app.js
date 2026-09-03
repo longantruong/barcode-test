@@ -3,24 +3,77 @@ const result = document.getElementById("result");
 const resetButton = document.getElementById("resetButton");
 const statusText = document.getElementById("statusText");
 const numberPad = document.getElementById("numberPad");
+const sendButton = document.getElementById("sendButton");
+
+const API_URL = "https://update.wymanmelyssa4.workers.dev/";
 
 let reader;
 let isScanning = false;
 
+// ========================================
+// AMOUNT
+// Mặc định = 1
+// ========================================
+
+let selectedAmount = 1;
+
+
+// ========================================
+// TẠO BUTTON 1 -> 48
+// ========================================
+
 for (let number = 1; number <= 48; number += 1) {
+
     const button = document.createElement("button");
+
     button.type = "button";
     button.className = `number-button${number === 1 ? " active" : ""}`;
     button.textContent = number;
     button.setAttribute("aria-label", `Số ${number}`);
 
     button.addEventListener("click", () => {
-        document.querySelector(".number-button.active")?.classList.remove("active");
+
+        // Xóa active cũ
+        document
+            .querySelector(".number-button.active")
+            ?.classList.remove("active");
+
+        // Active button mới
         button.classList.add("active");
+
+        // Lưu amount
+        selectedAmount = number;
+
+        console.log("Amount:", selectedAmount);
     });
 
     numberPad.appendChild(button);
 }
+
+
+// ========================================
+// TÁCH BARCODE 14 SỐ
+// ========================================
+
+function parseBarcode(code) {
+
+    if (!/^\d{14}$/.test(code)) {
+        return null;
+    }
+
+    return {
+        game: code.substring(0, 4),
+        ticket_number: code.substring(4, 10),
+        ticket_sequence: code.substring(10, 13),
+        alpha: code.substring(13, 14),
+        amount: selectedAmount
+    };
+}
+
+
+// ========================================
+// START SCANNER
+// ========================================
 
 async function startScanner() {
 
@@ -40,13 +93,20 @@ async function startScanner() {
             await ZXingBrowser.BrowserCodeReader.listVideoInputDevices();
 
         if (!devices.length) {
+
             result.textContent = "Không tìm thấy camera";
             statusText.textContent = "Camera chưa sẵn sàng";
+
             isScanning = false;
+            resetButton.disabled = false;
+
             return;
         }
 
-        // Camera sau
+        // ========================================
+        // CHỌN CAMERA SAU
+        // ========================================
+
         const deviceId = devices[devices.length - 1].deviceId;
 
         const activeReader = reader;
@@ -62,12 +122,14 @@ async function startScanner() {
 
                 console.log("Barcode:", code);
 
-                // ==============================
-                // PHẢI ĐÚNG 14 SỐ
-                // ==============================
+                // ========================================
+                // KIỂM TRA 14 SỐ
+                // ========================================
+
                 if (!/^\d{14}$/.test(code)) {
 
                     result.textContent = code;
+
                     statusText.textContent =
                         "Barcode phải gồm đúng 14 số";
 
@@ -82,26 +144,49 @@ async function startScanner() {
                     return;
                 }
 
-                // ==============================
+
+                // ========================================
                 // BARCODE HỢP LỆ
-                // ==============================
+                // ========================================
+
+                const data = parseBarcode(code);
+
+                console.log("Barcode data:", data);
 
                 result.textContent = code;
+
                 statusText.textContent =
                     "Đã nhận diện thành công";
 
+                // Dừng scan
                 isScanning = false;
+
                 resetButton.disabled = false;
 
-                // Dừng camera
+
+                // ========================================
+                // DỪNG CAMERA
+                // ========================================
+
                 try {
+
                     activeReader.reset();
+
                 } catch (stopError) {
+
                     console.warn(
                         "Không thể dừng camera:",
                         stopError
                     );
                 }
+
+
+                // ========================================
+                // LƯU DATA ĐỂ SEND
+                // ========================================
+
+                window.barcodeData = data;
+
             }
         );
 
@@ -110,19 +195,31 @@ async function startScanner() {
         console.error(error);
 
         result.textContent = "Không thể mở camera";
+
         statusText.textContent =
             "Có lỗi khi truy cập camera";
 
         isScanning = false;
+
+        resetButton.disabled = false;
     }
 }
+
+
+// ========================================
+// RESET
+// ========================================
 
 resetButton.addEventListener("click", () => {
 
     if (reader) {
+
         try {
+
             reader.reset();
+
         } catch (stopError) {
+
             console.warn(
                 "Không thể dừng camera cũ:",
                 stopError
@@ -130,7 +227,115 @@ resetButton.addEventListener("click", () => {
         }
     }
 
+    window.barcodeData = null;
+
     startScanner();
 });
+
+
+// ========================================
+// SEND DATA LÊN API
+// ========================================
+
+sendButton.addEventListener("click", async () => {
+
+    // Chưa quét barcode
+    if (!window.barcodeData) {
+
+        statusText.textContent =
+            "Vui lòng quét barcode trước";
+
+        return;
+    }
+
+    // Lấy barcode hiện tại
+    const data = {
+        ...window.barcodeData,
+
+        // Luôn lấy amount hiện tại
+        amount: selectedAmount
+    };
+
+    console.log("Sending:", data);
+
+    sendButton.disabled = true;
+
+    statusText.textContent = "Đang gửi...";
+
+    try {
+
+        const response = await fetch(API_URL, {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify(data)
+        });
+
+
+        // ========================================
+        // KIỂM TRA RESPONSE
+        // ========================================
+
+        const responseText = await response.text();
+
+        let responseData;
+
+        try {
+
+            responseData = JSON.parse(responseText);
+
+        } catch {
+
+            responseData = responseText;
+        }
+
+
+        console.log("API response:", responseData);
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                `API Error ${response.status}: ${responseText}`
+            );
+        }
+
+
+        // ========================================
+        // SEND THÀNH CÔNG
+        // ========================================
+
+        statusText.textContent =
+            "Gửi thành công";
+
+        console.log(
+            "Đã gửi thành công:",
+            data
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Lỗi gửi API:",
+            error
+        );
+
+        statusText.textContent =
+            "Gửi thất bại";
+
+    } finally {
+
+        sendButton.disabled = false;
+    }
+});
+
+
+// ========================================
+// KHỞI ĐỘNG CAMERA
+// ========================================
 
 startScanner();
