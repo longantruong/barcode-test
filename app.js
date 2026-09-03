@@ -515,8 +515,11 @@ confirmSendButton.addEventListener(
             // SUCCESS
             // ====================================
 
-            statusText.textContent =
-                "Gửi thành công";
+            statusText.textContent = "Gửi thành công";
+
+            showSuccessDialog("Gửi thành công")
+
+            result.textContent = "";
 
 
             console.log(
@@ -596,6 +599,53 @@ if (closeErrorDialog && errorDialog) {
         "click",
         () => {
             errorDialog.close();
+        }
+    );
+
+}
+
+// ========================================
+// SUCCESS DIALOG
+// ========================================
+
+const successDialog =
+    document.getElementById("successDialog");
+
+const successDialogMessage =
+    document.getElementById("successDialogMessage");
+
+const closeSuccessDialog =
+    document.getElementById("closeSuccessDialog");
+
+
+function showSuccessDialog(message) {
+
+    if (!successDialog || !successDialogMessage) {
+
+        console.log(
+            "Không tìm thấy Success Dialog"
+        );
+
+        return;
+    }
+
+    successDialogMessage.textContent =
+        message;
+
+    if (!successDialog.open) {
+        successDialog.showModal();
+    }
+}
+
+
+if (closeSuccessDialog && successDialog) {
+
+    closeSuccessDialog.addEventListener(
+        "click",
+        () => {
+
+            successDialog.close();
+
         }
     );
 

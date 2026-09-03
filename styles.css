@@ -369,3 +369,172 @@ video {
     opacity: 0.5;
     cursor: not-allowed;
 }
+
+/* ========================================
+   SUCCESS DIALOG
+======================================== */
+
+#successDialog {
+    width: min(90%, 420px);
+    padding: 0;
+    border: none;
+    border-radius: 20px;
+    background: #ffffff;
+    color: #172033;
+    box-shadow:
+        0 25px 70px rgba(0, 0, 0, 0.22);
+
+    animation: successDialogShow 0.2s ease-out;
+}
+
+
+/* Overlay phía sau */
+
+#successDialog::backdrop {
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(4px);
+}
+
+
+/* Nội dung */
+
+#successDialog .dialog-content {
+    padding: 30px 28px 26px;
+    text-align: center;
+}
+
+
+/* Icon thành công */
+
+#successDialog .dialog-content::before {
+    content: "✓";
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 64px;
+    height: 64px;
+
+    margin: 0 auto 18px;
+
+    border-radius: 50%;
+
+    background: #dcfce7;
+    color: #16a34a;
+
+    font-size: 34px;
+    font-weight: 700;
+
+    box-shadow:
+        0 8px 20px rgba(22, 163, 74, 0.15);
+}
+
+
+/* Tiêu đề */
+
+#successDialog h3 {
+    margin: 0 0 10px;
+
+    font-size: 22px;
+    font-weight: 700;
+
+    color: #15803d;
+}
+
+
+/* Nội dung message */
+
+#successDialogMessage {
+    margin: 0 0 24px;
+
+    white-space: pre-line;
+
+    font-size: 15px;
+    line-height: 1.6;
+
+    color: #475569;
+}
+
+
+/* Button OK */
+
+#closeSuccessDialog {
+    width: 100%;
+    height: 46px;
+
+    border: none;
+    border-radius: 10px;
+
+    background: #16a34a;
+    color: #ffffff;
+
+    font-size: 15px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        transform 0.15s ease,
+        box-shadow 0.2s ease;
+}
+
+
+/* Hover */
+
+#closeSuccessDialog:hover {
+    background: #15803d;
+
+    box-shadow:
+        0 6px 16px rgba(22, 163, 74, 0.25);
+}
+
+
+/* Click */
+
+#closeSuccessDialog:active {
+    transform: scale(0.98);
+}
+
+
+/* Animation */
+
+@keyframes successDialogShow {
+
+    from {
+        opacity: 0;
+        transform: scale(0.92) translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+
+/* Mobile */
+
+@media (max-width: 480px) {
+
+    #successDialog {
+        width: calc(100% - 32px);
+        border-radius: 18px;
+    }
+
+    #successDialog .dialog-content {
+        padding: 26px 22px 22px;
+    }
+
+    #successDialog .dialog-content::before {
+        width: 58px;
+        height: 58px;
+        font-size: 30px;
+    }
+
+    #successDialog h3 {
+        font-size: 20px;
+    }
+
+}
