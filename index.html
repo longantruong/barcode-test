@@ -24,7 +24,7 @@
       margin: 0;
       display: grid;
       place-items: center;
-      padding: 24px 16px;
+      padding: 14px 12px;
       background:
         radial-gradient(circle at top left, #dceaff 0, transparent 32%),
         radial-gradient(circle at bottom right, #dff8ee 0, transparent 28%),
@@ -32,49 +32,30 @@
     }
 
     .scanner-card {
-      width: min(100%, 440px);
-      padding: 28px;
+      width: min(100%, 390px);
+      padding: 18px;
       text-align: center;
       background: rgba(255, 255, 255, 0.92);
       border: 1px solid rgba(255, 255, 255, 0.9);
-      border-radius: 24px;
+      border-radius: 20px;
       box-shadow: 0 18px 50px rgba(31, 51, 89, 0.13);
     }
 
-    .icon {
-      width: 48px;
-      height: 48px;
-      display: grid;
-      place-items: center;
-      margin: 0 auto 16px;
-      color: #fff;
-      font-size: 24px;
-      border-radius: 15px;
-      background: linear-gradient(135deg, #3568e8, #5d87f3);
-      box-shadow: 0 8px 18px rgba(53, 104, 232, 0.27);
-    }
-
-    h1 {
-      margin: 0;
-      font-size: 24px;
-      letter-spacing: -0.03em;
-    }
-
-    .subtitle {
-      margin: 8px 0 24px;
-      color: #68738a;
+    .instruction {
+      margin: 0 0 12px;
+      color: #4e5d75;
       font-size: 14px;
-      line-height: 1.5;
+      font-weight: 600;
     }
 
     .camera-frame {
       position: relative;
       overflow: hidden;
-      width: min(100%, 320px);
-      aspect-ratio: 4 / 3;
+      width: min(100%, 270px);
+      aspect-ratio: 8 / 3;
       margin: 0 auto;
       border: 1px solid #dde4f0;
-      border-radius: 18px;
+      border-radius: 14px;
       background: #172033;
       box-shadow: 0 8px 20px rgba(23, 32, 51, 0.14);
     }
@@ -108,7 +89,7 @@
       justify-content: center;
       align-items: center;
       gap: 8px;
-      margin: 18px 0 10px;
+      margin: 11px 0 8px;
       color: #68738a;
       font-size: 13px;
     }
@@ -122,13 +103,13 @@
     }
 
     #result {
-      min-height: 56px;
+      min-height: 44px;
       display: grid;
       place-items: center;
-      padding: 13px 16px;
+      padding: 10px 12px;
       overflow-wrap: anywhere;
       color: #234991;
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 700;
       letter-spacing: 0.01em;
       border: 1px dashed #c9d5e9;
@@ -138,8 +119,8 @@
 
     #resetButton {
       width: 100%;
-      margin-top: 16px;
-      padding: 13px 18px;
+      margin-top: 10px;
+      padding: 10px 16px;
       color: #fff;
       font: inherit;
       font-weight: 700;
@@ -163,9 +144,41 @@
       box-shadow: none;
     }
 
+    .number-pad {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 7px;
+      margin-top: 14px;
+    }
+
+    .number-button {
+      min-height: 35px;
+      padding: 0;
+      color: #4a5871;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid #dde4f0;
+      border-radius: 9px;
+      background: #fff;
+      transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+    }
+
+    .number-button:hover,
+    .number-button.active {
+      color: #fff;
+      border-color: #3568e8;
+      background: #3568e8;
+    }
+
+    .number-button:active {
+      transform: scale(0.95);
+    }
+
     @media (max-width: 380px) {
-      .scanner-card { padding: 22px 18px; }
-      h1 { font-size: 22px; }
+      .scanner-card { padding: 15px; }
+      .number-pad { gap: 5px; }
     }
   </style>
 </head>
@@ -173,9 +186,7 @@
 <body>
 
 <main class="scanner-card">
-  <div class="icon" aria-hidden="true">⌁</div>
-  <h1>Quét mã barcode</h1>
-  <p class="subtitle">Đưa mã vào giữa khung hình để hệ thống tự động nhận diện.</p>
+  <p class="instruction">Hãy đưa mã barcode vào giữa khung hình</p>
 
   <div class="camera-frame">
     <video id="video" autoplay muted playsinline></video>
@@ -186,6 +197,8 @@
   <div id="result">Đang quét...</div>
 
   <button id="resetButton" type="button" disabled>Quét mã khác</button>
+
+  <div class="number-pad" id="numberPad" aria-label="Chọn số"></div>
 </main>
 
 <script>
@@ -194,9 +207,23 @@ const video = document.getElementById("video");
 const result = document.getElementById("result");
 const resetButton = document.getElementById("resetButton");
 const statusText = document.getElementById("statusText");
+const numberPad = document.getElementById("numberPad");
 
 let reader;
 let isScanning = false;
+
+for (let number = 1; number <= 30; number += 1) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = `number-button${number === 1 ? " active" : ""}`;
+  button.textContent = number;
+  button.setAttribute("aria-label", `Số ${number}`);
+  button.addEventListener("click", () => {
+    document.querySelector(".number-button.active")?.classList.remove("active");
+    button.classList.add("active");
+  });
+  numberPad.appendChild(button);
+}
 
 async function startScanner() {
 
