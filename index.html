@@ -9,51 +9,191 @@
   <script src="https://unpkg.com/@zxing/browser@latest"></script>
 
   <style>
+    :root {
+      color: #172033;
+      background: #f4f7fb;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: Arial;
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      padding: 24px 16px;
+      background:
+        radial-gradient(circle at top left, #dceaff 0, transparent 32%),
+        radial-gradient(circle at bottom right, #dff8ee 0, transparent 28%),
+        #f4f7fb;
+    }
+
+    .scanner-card {
+      width: min(100%, 440px);
+      padding: 28px;
       text-align: center;
-      padding: 20px;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      border-radius: 24px;
+      box-shadow: 0 18px 50px rgba(31, 51, 89, 0.13);
+    }
+
+    .icon {
+      width: 48px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      margin: 0 auto 16px;
+      color: #fff;
+      font-size: 24px;
+      border-radius: 15px;
+      background: linear-gradient(135deg, #3568e8, #5d87f3);
+      box-shadow: 0 8px 18px rgba(53, 104, 232, 0.27);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: -0.03em;
+    }
+
+    .subtitle {
+      margin: 8px 0 24px;
+      color: #68738a;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .camera-frame {
+      position: relative;
+      overflow: hidden;
+      width: min(100%, 320px);
+      aspect-ratio: 4 / 3;
+      margin: 0 auto;
+      border: 1px solid #dde4f0;
+      border-radius: 18px;
+      background: #172033;
+      box-shadow: 0 8px 20px rgba(23, 32, 51, 0.14);
     }
 
     video {
       width: 100%;
-      max-width: 500px;
-      border: 2px solid #333;
-      border-radius: 10px;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+    }
+
+    .scan-line {
+      position: absolute;
+      z-index: 1;
+      top: 50%;
+      left: 12%;
+      width: 76%;
+      height: 2px;
+      border-radius: 99px;
+      background: #6ef2b2;
+      box-shadow: 0 0 12px #6ef2b2;
+      animation: scan 2.4s ease-in-out infinite;
+    }
+
+    @keyframes scan {
+      50% { transform: translateY(-55px); }
+    }
+
+    .status {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      margin: 18px 0 10px;
+      color: #68738a;
+      font-size: 13px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #2cc879;
+      box-shadow: 0 0 0 4px #e0f8eb;
     }
 
     #result {
-      margin-top: 20px;
-      font-size: 30px;
-      font-weight: bold;
+      min-height: 56px;
+      display: grid;
+      place-items: center;
+      padding: 13px 16px;
+      overflow-wrap: anywhere;
+      color: #234991;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      border: 1px dashed #c9d5e9;
+      border-radius: 13px;
+      background: #f7faff;
     }
 
     #resetButton {
+      width: 100%;
       margin-top: 16px;
-      padding: 10px 18px;
-      font-size: 16px;
+      padding: 13px 18px;
+      color: #fff;
+      font: inherit;
+      font-weight: 700;
       cursor: pointer;
+      border: 0;
+      border-radius: 12px;
+      background: #3568e8;
+      box-shadow: 0 8px 16px rgba(53, 104, 232, 0.2);
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    #resetButton:hover:not(:disabled) {
+      background: #2758d3;
+      transform: translateY(-1px);
+    }
+
+    #resetButton:disabled {
+      color: #8d9ab0;
+      cursor: not-allowed;
+      background: #e9eef6;
+      box-shadow: none;
+    }
+
+    @media (max-width: 380px) {
+      .scanner-card { padding: 22px 18px; }
+      h1 { font-size: 22px; }
     }
   </style>
 </head>
 
 <body>
 
-<h2>Barcode Scanner</h2>
+<main class="scanner-card">
+  <div class="icon" aria-hidden="true">⌁</div>
+  <h1>Quét mã barcode</h1>
+  <p class="subtitle">Đưa mã vào giữa khung hình để hệ thống tự động nhận diện.</p>
 
-<video id="video" autoplay muted playsinline></video>
+  <div class="camera-frame">
+    <video id="video" autoplay muted playsinline></video>
+    <div class="scan-line" aria-hidden="true"></div>
+  </div>
 
-<div id="result">
-  Đang quét...
-</div>
+  <div class="status"><span class="status-dot"></span><span id="statusText">Đang mở camera...</span></div>
+  <div id="result">Đang quét...</div>
 
-<button id="resetButton" type="button" disabled>Quét mã khác</button>
+  <button id="resetButton" type="button" disabled>Quét mã khác</button>
+</main>
 
 <script>
 
 const video = document.getElementById("video");
 const result = document.getElementById("result");
 const resetButton = document.getElementById("resetButton");
+const statusText = document.getElementById("statusText");
 
 const reader = new ZXingBrowser.BrowserMultiFormatReader();
 let isScanning = false;
@@ -65,6 +205,7 @@ async function startScanner() {
   isScanning = true;
   resetButton.disabled = true;
   result.textContent = "Đang quét...";
+  statusText.textContent = "Đang quét barcode...";
 
   try {
     const devices =
@@ -72,6 +213,7 @@ async function startScanner() {
 
     if (!devices.length) {
       result.textContent = "Không tìm thấy camera";
+      statusText.textContent = "Camera chưa sẵn sàng";
       isScanning = false;
       return;
     }
@@ -92,6 +234,7 @@ async function startScanner() {
 
           // Hiển thị barcode
           result.textContent = code;
+          statusText.textContent = "Đã nhận diện thành công";
 
           // Dừng camera
           reader.reset();
@@ -104,6 +247,7 @@ async function startScanner() {
   } catch (error) {
     console.error(error);
     result.textContent = "Không thể mở camera";
+    statusText.textContent = "Có lỗi khi truy cập camera";
     isScanning = false;
   }
 }
