@@ -236,3 +236,136 @@ video {
     cursor: pointer;
     font-size: 16px;
 }
+
+/* ========================================
+   CONFIRM DIALOG
+======================================== */
+
+#confirmDialog {
+    width: min(90%, 400px);
+    max-width: 400px;
+
+    padding: 0;
+    border: none;
+    border-radius: 16px;
+
+    background: #ffffff;
+
+    box-shadow:
+        0 20px 60px rgba(0, 0, 0, 0.25);
+
+    color: #172033;
+}
+
+
+/* Overlay phía sau */
+
+#confirmDialog::backdrop {
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(3px);
+}
+
+
+/* Nội dung */
+
+#confirmDialog .dialog-content {
+    padding: 24px;
+}
+
+
+/* Tiêu đề */
+
+#confirmDialog h3 {
+    margin: 0 0 16px;
+
+    font-size: 20px;
+    font-weight: 700;
+
+    color: #172033;
+}
+
+
+/* Nội dung message */
+
+#confirmDialogMessage {
+    margin: 0;
+
+    white-space: pre-line;
+
+    font-size: 15px;
+    line-height: 1.7;
+
+    color: #4b5563;
+}
+
+
+/* ========================================
+   BUTTONS
+======================================== */
+
+#confirmDialog .dialog-buttons {
+    display: flex;
+
+    gap: 10px;
+
+    margin-top: 24px;
+}
+
+
+/* Cả 2 button */
+
+#confirmDialog .dialog-buttons button {
+    flex: 1;
+
+    height: 46px;
+
+    border: none;
+    border-radius: 10px;
+
+    font-size: 15px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.15s ease,
+        opacity 0.15s ease;
+}
+
+
+/* Hủy */
+
+#cancelConfirmButton {
+    background: #eef1f5;
+    color: #374151;
+}
+
+
+/* Gửi */
+
+#confirmSendButton {
+    background: #2563eb;
+    color: #ffffff;
+}
+
+
+/* Hover */
+
+#confirmDialog .dialog-buttons button:hover {
+    opacity: 0.9;
+}
+
+
+/* Click */
+
+#confirmDialog .dialog-buttons button:active {
+    transform: scale(0.97);
+}
+
+
+/* Disabled */
+
+#confirmDialog .dialog-buttons button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

@@ -269,7 +269,28 @@ resetButton.addEventListener("click", () => {
 // SEND
 // ========================================
 
-sendButton.addEventListener("click", async () => {
+// ========================================
+// CONFIRM DIALOG
+// ========================================
+
+const confirmDialog =
+    document.getElementById("confirmDialog");
+
+const confirmDialogMessage =
+    document.getElementById("confirmDialogMessage");
+
+const cancelConfirmButton =
+    document.getElementById("cancelConfirmButton");
+
+const confirmSendButton =
+    document.getElementById("confirmSendButton");
+
+
+// ========================================
+// SEND BUTTON
+// ========================================
+
+sendButton.addEventListener("click", () => {
 
     // ========================================
     // CHƯA CÓ BARCODE
@@ -285,157 +306,233 @@ sendButton.addEventListener("click", async () => {
 
 
     // ========================================
-    // TẠO DATA GỬI API
+    // HIỂN THỊ CONFIRM
     // ========================================
 
-    const data = {
-        game: barcodeData.game,
-
-        ticket_number: barcodeData.ticket_number,
-
-        ticket_sequence: barcodeData.ticket_sequence,
-
-        alpha: barcodeData.alpha,
-
-        amount: selectedAmount
-    };
+    confirmDialogMessage.textContent =
+        `Bạn có chắc muốn gửi không?\n\n` +
+        `Game: ${barcodeData.game}\n` +
+        `Ticket: ${barcodeData.ticket_number}\n` +
+        `Số thứ tự: ${barcodeData.ticket_sequence}\n` +
+        `Số lượng: ${selectedAmount}`;
 
 
-    console.log(
-        "Sending data:",
-        data
-    );
+    confirmDialog.showModal();
+});
 
 
-    // ========================================
-    // DISABLE SEND
-    // ========================================
+// ========================================
+// HỦY
+// ========================================
 
-    sendButton.disabled = true;
+cancelConfirmButton.addEventListener(
+    "click",
+    () => {
 
-    statusText.textContent =
-        "Đang gửi...";
+        confirmDialog.close();
+
+    }
+);
 
 
-    try {
+// ========================================
+// XÁC NHẬN GỬI
+// ========================================
 
-        // ========================================
-        // CALL API
-        // ========================================
+confirmSendButton.addEventListener(
+    "click",
+    async () => {
 
-        const response = await fetch(
-            API_URL,
-            {
-                method: "POST",
+        // Đóng confirm dialog
+        confirmDialog.close();
 
-                headers: {
-                    "Content-Type": "application/json"
-                },
 
-                body: JSON.stringify(data)
-            }
+        // ====================================
+        // DATA GỬI API
+        // ====================================
+
+        const data = {
+
+            game: barcodeData.game,
+
+            ticket_number:
+                barcodeData.ticket_number,
+
+            ticket_sequence:
+                barcodeData.ticket_sequence,
+
+            alpha:
+                barcodeData.alpha,
+
+            amount:
+                selectedAmount
+        };
+
+
+        console.log(
+            "Sending data:",
+            data
         );
 
 
-        // ========================================
-        // ĐỌC RESPONSE
-        // ========================================
+        // ====================================
+        // DISABLE SEND
+        // ====================================
 
-        const responseText =
-            await response.text();
+        sendButton.disabled = true;
+        confirmSendButton.disabled = true;
 
 
-        let responseData = null;
+        statusText.textContent =
+            "Đang gửi...";
 
 
         try {
 
-            responseData =
-                JSON.parse(responseText);
+            // ====================================
+            // CALL API
+            // ====================================
 
-        } catch {
+            const response = await fetch(
+                API_URL,
+                {
+                    method: "POST",
 
-            responseData =
-                responseText;
-        }
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
 
-
-        console.log(
-            "API status:",
-            response.status
-        );
-
-        console.log(
-            "API response:",
-            responseData
-        );
-
-
-        // ========================================
-        // KIỂM TRA ERROR
-        //
-        // HTTP ERROR:
-        // response.ok === false
-        //
-        // HOẶC API TRẢ:
-        // { success: false }
-        // ========================================
-
-        const apiError =
-            !response.ok ||
-            (
-                responseData &&
-                typeof responseData === "object" &&
-                responseData.success === false
+                    body: JSON.stringify(data)
+                }
             );
 
 
-        if (apiError) {
+            // ====================================
+            // ĐỌC RESPONSE
+            // ====================================
 
-            let errorMessage =
-                "Update thất bại.";
-
-
-            // ------------------------------------
-            // API trả JSON
-            // ------------------------------------
-
-            if (
-                responseData &&
-                typeof responseData === "object"
-            ) {
-
-                if (responseData.message) {
-
-                    errorMessage =
-                        responseData.message;
-
-                } else if (responseData.error) {
-
-                    errorMessage =
-                        responseData.error;
-                }
-            }
+            const responseText =
+                await response.text();
 
 
-            // ------------------------------------
-            // API trả TEXT
-            // ------------------------------------
+            let responseData = null;
 
-            else if (
-                typeof responseData === "string" &&
-                responseData.trim()
-            ) {
 
-                errorMessage =
-                    responseData;
+            try {
+
+                responseData =
+                    JSON.parse(responseText);
+
+            } catch {
+
+                responseData =
+                    responseText;
             }
 
 
             console.log(
-                "API Error:",
-                response.status,
-                errorMessage
+                "API status:",
+                response.status
+            );
+
+            console.log(
+                "API response:",
+                responseData
+            );
+
+
+            // ====================================
+            // KIỂM TRA ERROR
+            // ====================================
+
+            const apiError =
+                !response.ok ||
+                (
+                    responseData &&
+                    typeof responseData === "object" &&
+                    responseData.success === false
+                );
+
+
+            if (apiError) {
+
+                let errorMessage =
+                    "Update thất bại.";
+
+
+                // JSON
+                if (
+                    responseData &&
+                    typeof responseData === "object"
+                ) {
+
+                    if (responseData.message) {
+
+                        errorMessage =
+                            responseData.message;
+
+                    } else if (responseData.error) {
+
+                        errorMessage =
+                            responseData.error;
+                    }
+
+                }
+
+                // TEXT
+                else if (
+                    typeof responseData === "string" &&
+                    responseData.trim()
+                ) {
+
+                    errorMessage =
+                        responseData;
+                }
+
+
+                console.log(
+                    "API Error:",
+                    response.status,
+                    errorMessage
+                );
+
+
+                statusText.textContent =
+                    "Gửi thất bại";
+
+
+                showErrorDialog(
+                    errorMessage
+                );
+
+
+                return;
+            }
+
+
+            // ====================================
+            // SUCCESS
+            // ====================================
+
+            statusText.textContent =
+                "Gửi thành công";
+
+
+            console.log(
+                "Đã gửi thành công:",
+                data
+            );
+
+        } catch (error) {
+
+            // ====================================
+            // NETWORK ERROR
+            // ====================================
+
+            console.log(
+                "Lỗi gửi API:",
+                error
             );
 
 
@@ -443,68 +540,19 @@ sendButton.addEventListener("click", async () => {
                 "Gửi thất bại";
 
 
-            // ====================================
-            // SHOW ERROR DIALOG
-            // ====================================
-
             showErrorDialog(
-                errorMessage
+                "Không thể kết nối đến server.\n" +
+                "Vui lòng thử lại."
             );
 
+        } finally {
 
-            return;
+            sendButton.disabled = false;
+
+            confirmSendButton.disabled = false;
         }
-
-
-        // ========================================
-        // SUCCESS
-        // ========================================
-
-        statusText.textContent =
-            "Gửi thành công";
-
-
-        console.log(
-            "Đã gửi thành công:",
-            data
-        );
-
-
-    } catch (error) {
-
-        // ========================================
-        // NETWORK / CONNECTION ERROR
-        // ========================================
-
-        console.log(
-            "Lỗi gửi API:",
-            error
-        );
-
-
-        statusText.textContent =
-            "Gửi thất bại";
-
-
-        // ========================================
-        // SHOW ERROR DIALOG
-        // ========================================
-
-        showErrorDialog(
-            "Không thể kết nối đến server.\n" +
-            "Vui lòng thử lại."
-        );
-
-
-    } finally {
-
-        // ========================================
-        // ENABLE SEND LẠI
-        // ========================================
-
-        sendButton.disabled = false;
     }
-});
+);
 
 
 // ========================================
