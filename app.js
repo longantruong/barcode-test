@@ -13,10 +13,12 @@ for (let number = 1; number <= 48; number += 1) {
     button.className = `number-button${number === 1 ? " active" : ""}`;
     button.textContent = number;
     button.setAttribute("aria-label", `Số ${number}`);
+
     button.addEventListener("click", () => {
         document.querySelector(".number-button.active")?.classList.remove("active");
         button.classList.add("active");
     });
+
     numberPad.appendChild(button);
 }
 
@@ -26,11 +28,14 @@ async function startScanner() {
 
     isScanning = true;
     resetButton.disabled = true;
+
     result.textContent = "Đang quét...";
     statusText.textContent = "Đang quét barcode...";
+
     reader = new ZXingBrowser.BrowserMultiFormatReader();
 
     try {
+
         const devices =
             await ZXingBrowser.BrowserCodeReader.listVideoInputDevices();
 
@@ -51,44 +56,77 @@ async function startScanner() {
             video,
             (decoded, error) => {
 
-                if (decoded && isScanning) {
+                if (!decoded || !isScanning) return;
 
-                    let code = decoded.getText();
+                const code = decoded.getText().trim();
 
-                    console.log("Barcode:", code);
+                console.log("Barcode:", code);
 
-                    // Hiển thị barcode
+                // ==============================
+                // PHẢI ĐÚNG 14 SỐ
+                // ==============================
+                if (!/^\d{14}$/.test(code)) {
+
                     result.textContent = code;
-                    statusText.textContent = "Đã nhận diện thành công";
+                    statusText.textContent =
+                        "Barcode phải gồm đúng 14 số";
 
-                    // Cho phép quét mã mới trước khi dừng camera để nút không bị khóa
-                    isScanning = false;
-                    resetButton.disabled = false;
+                    console.warn(
+                        "Barcode không hợp lệ:",
+                        code,
+                        "Độ dài:",
+                        code.length
+                    );
 
-                    // Dừng camera. Một vài trình duyệt có thể báo lỗi khi stream đã đóng.
-                    try {
-                        activeReader.reset();
-                    } catch (stopError) {
-                        console.warn("Không thể dừng camera:", stopError);
-                    }
+                    // Tiếp tục quét
+                    return;
                 }
 
+                // ==============================
+                // BARCODE HỢP LỆ
+                // ==============================
+
+                result.textContent = code;
+                statusText.textContent =
+                    "Đã nhận diện thành công";
+
+                isScanning = false;
+                resetButton.disabled = false;
+
+                // Dừng camera
+                try {
+                    activeReader.reset();
+                } catch (stopError) {
+                    console.warn(
+                        "Không thể dừng camera:",
+                        stopError
+                    );
+                }
             }
         );
+
     } catch (error) {
+
         console.error(error);
+
         result.textContent = "Không thể mở camera";
-        statusText.textContent = "Có lỗi khi truy cập camera";
+        statusText.textContent =
+            "Có lỗi khi truy cập camera";
+
         isScanning = false;
     }
 }
 
 resetButton.addEventListener("click", () => {
+
     if (reader) {
         try {
             reader.reset();
         } catch (stopError) {
-            console.warn("Không thể dừng camera cũ:", stopError);
+            console.warn(
+                "Không thể dừng camera cũ:",
+                stopError
+            );
         }
     }
 
