@@ -17,6 +17,9 @@ let isScanning = false;
 
 let selectedAmount = 1;
 
+// Lưu barcode đã quét
+let barcodeData = null;
+
 
 // ========================================
 // TẠO BUTTON 1 -> 48
@@ -27,13 +30,15 @@ for (let number = 1; number <= 48; number += 1) {
     const button = document.createElement("button");
 
     button.type = "button";
-    button.className = `number-button${number === 1 ? " active" : ""}`;
+    button.className =
+        `number-button${number === 1 ? " active" : ""}`;
+
     button.textContent = number;
     button.setAttribute("aria-label", `Số ${number}`);
 
     button.addEventListener("click", () => {
 
-        // Xóa active cũ
+        // Xóa active button cũ
         document
             .querySelector(".number-button.active")
             ?.classList.remove("active");
@@ -41,10 +46,10 @@ for (let number = 1; number <= 48; number += 1) {
         // Active button mới
         button.classList.add("active");
 
-        // Lưu amount
+        // Cập nhật amount
         selectedAmount = number;
 
-        console.log("Amount:", selectedAmount);
+        console.log("Selected amount:", selectedAmount);
     });
 
     numberPad.appendChild(button);
@@ -53,6 +58,11 @@ for (let number = 1; number <= 48; number += 1) {
 
 // ========================================
 // TÁCH BARCODE 14 SỐ
+//
+// 4 số đầu  = game
+// 6 số tiếp = ticket_number
+// 3 số tiếp = ticket_sequence
+// 1 số cuối = alpha
 // ========================================
 
 function parseBarcode(code) {
@@ -63,10 +73,12 @@ function parseBarcode(code) {
 
     return {
         game: code.substring(0, 4),
+
         ticket_number: code.substring(4, 10),
+
         ticket_sequence: code.substring(10, 13),
-        alpha: code.substring(13, 14),
-        amount: selectedAmount
+
+        alpha: code.substring(13, 14)
     };
 }
 
@@ -80,6 +92,7 @@ async function startScanner() {
     if (isScanning) return;
 
     isScanning = true;
+
     resetButton.disabled = true;
 
     result.textContent = "Đang quét...";
@@ -90,40 +103,55 @@ async function startScanner() {
     try {
 
         const devices =
-            await ZXingBrowser.BrowserCodeReader.listVideoInputDevices();
+            await ZXingBrowser.BrowserCodeReader
+                .listVideoInputDevices();
 
         if (!devices.length) {
 
-            result.textContent = "Không tìm thấy camera";
-            statusText.textContent = "Camera chưa sẵn sàng";
+            result.textContent =
+                "Không tìm thấy camera";
+
+            statusText.textContent =
+                "Camera chưa sẵn sàng";
 
             isScanning = false;
+
             resetButton.disabled = false;
 
             return;
         }
 
+
         // ========================================
-        // CHỌN CAMERA SAU
+        // CAMERA SAU
         // ========================================
 
-        const deviceId = devices[devices.length - 1].deviceId;
+        const deviceId =
+            devices[devices.length - 1].deviceId;
 
         const activeReader = reader;
+
 
         activeReader.decodeFromVideoDevice(
             deviceId,
             video,
             (decoded, error) => {
 
-                if (!decoded || !isScanning) return;
+                if (!decoded || !isScanning) {
+                    return;
+                }
 
-                const code = decoded.getText().trim();
+                const code =
+                    decoded.getText().trim();
 
-                console.log("Barcode:", code);
+                console.log(
+                    "Barcode:",
+                    code
+                );
+
 
                 // ========================================
-                // KIỂM TRA 14 SỐ
+                // KIỂM TRA BARCODE 14 SỐ
                 // ========================================
 
                 if (!/^\d{14}$/.test(code)) {
@@ -149,16 +177,21 @@ async function startScanner() {
                 // BARCODE HỢP LỆ
                 // ========================================
 
-                const data = parseBarcode(code);
+                barcodeData = parseBarcode(code);
 
-                console.log("Barcode data:", data);
+                console.log(
+                    "Barcode data:",
+                    barcodeData
+                );
+
 
                 result.textContent = code;
 
                 statusText.textContent =
                     "Đã nhận diện thành công";
 
-                // Dừng scan
+
+                // Dừng scanner
                 isScanning = false;
 
                 resetButton.disabled = false;
@@ -179,14 +212,6 @@ async function startScanner() {
                         stopError
                     );
                 }
-
-
-                // ========================================
-                // LƯU DATA ĐỂ SEND
-                // ========================================
-
-                window.barcodeData = data;
-
             }
         );
 
@@ -194,7 +219,8 @@ async function startScanner() {
 
         console.error(error);
 
-        result.textContent = "Không thể mở camera";
+        result.textContent =
+            "Không thể mở camera";
 
         statusText.textContent =
             "Có lỗi khi truy cập camera";
@@ -227,20 +253,27 @@ resetButton.addEventListener("click", () => {
         }
     }
 
-    window.barcodeData = null;
 
+    // Xóa barcode cũ
+    barcodeData = null;
+
+
+    // Bắt đầu quét lại
     startScanner();
 });
 
 
 // ========================================
-// SEND DATA LÊN API
+// SEND
 // ========================================
 
 sendButton.addEventListener("click", async () => {
 
-    // Chưa quét barcode
-    if (!window.barcodeData) {
+    // ========================================
+    // CHƯA CÓ BARCODE
+    // ========================================
+
+    if (!barcodeData) {
 
         statusText.textContent =
             "Vui lòng quét barcode trước";
@@ -248,54 +281,82 @@ sendButton.addEventListener("click", async () => {
         return;
     }
 
-    // Lấy barcode hiện tại
-    const data = {
-        ...window.barcodeData,
 
-        // Luôn lấy amount hiện tại
+    // ========================================
+    // TẠO DATA GỬI API
+    //
+    // amount được lấy ngay lúc bấm Send
+    // ========================================
+
+    const data = {
+        game: barcodeData.game,
+
+        ticket_number: barcodeData.ticket_number,
+
+        ticket_sequence: barcodeData.ticket_sequence,
+
+        alpha: barcodeData.alpha,
+
         amount: selectedAmount
     };
 
-    console.log("Sending:", data);
+
+    console.log(
+        "Sending data:",
+        data
+    );
+
 
     sendButton.disabled = true;
 
-    statusText.textContent = "Đang gửi...";
+    statusText.textContent =
+        "Đang gửi...";
+
 
     try {
 
-        const response = await fetch(API_URL, {
+        const response = await fetch(
+            API_URL,
+            {
+                method: "POST",
 
-            method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
 
-            headers: {
-                "Content-Type": "application/json"
-            },
-
-            body: JSON.stringify(data)
-        });
+                body: JSON.stringify(data)
+            }
+        );
 
 
-        // ========================================
-        // KIỂM TRA RESPONSE
-        // ========================================
+        const responseText =
+            await response.text();
 
-        const responseText = await response.text();
 
         let responseData;
 
+
         try {
 
-            responseData = JSON.parse(responseText);
+            responseData =
+                JSON.parse(responseText);
 
         } catch {
 
-            responseData = responseText;
+            responseData =
+                responseText;
         }
 
 
-        console.log("API response:", responseData);
+        console.log(
+            "API response:",
+            responseData
+        );
 
+
+        // ========================================
+        // API ERROR
+        // ========================================
 
         if (!response.ok) {
 
@@ -306,16 +367,18 @@ sendButton.addEventListener("click", async () => {
 
 
         // ========================================
-        // SEND THÀNH CÔNG
+        // SUCCESS
         // ========================================
 
         statusText.textContent =
             "Gửi thành công";
 
+
         console.log(
             "Đã gửi thành công:",
             data
         );
+
 
     } catch (error) {
 
@@ -326,6 +389,7 @@ sendButton.addEventListener("click", async () => {
 
         statusText.textContent =
             "Gửi thất bại";
+
 
     } finally {
 
