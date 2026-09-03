@@ -195,7 +195,7 @@ const result = document.getElementById("result");
 const resetButton = document.getElementById("resetButton");
 const statusText = document.getElementById("statusText");
 
-const reader = new ZXingBrowser.BrowserMultiFormatReader();
+let reader;
 let isScanning = false;
 
 async function startScanner() {
@@ -206,6 +206,7 @@ async function startScanner() {
   resetButton.disabled = true;
   result.textContent = "Đang quét...";
   statusText.textContent = "Đang quét barcode...";
+  reader = new ZXingBrowser.BrowserMultiFormatReader();
 
   try {
     const devices =
@@ -221,12 +222,14 @@ async function startScanner() {
     // Camera sau
     const deviceId = devices[devices.length - 1].deviceId;
 
-    reader.decodeFromVideoDevice(
+    const activeReader = reader;
+
+    activeReader.decodeFromVideoDevice(
       deviceId,
       video,
       (decoded, error) => {
 
-        if (decoded) {
+        if (decoded && isScanning) {
 
           let code = decoded.getText();
 
@@ -236,10 +239,16 @@ async function startScanner() {
           result.textContent = code;
           statusText.textContent = "Đã nhận diện thành công";
 
-          // Dừng camera
-          reader.reset();
+          // Cho phép quét mã mới trước khi dừng camera để nút không bị khóa
           isScanning = false;
           resetButton.disabled = false;
+
+          // Dừng camera. Một vài trình duyệt có thể báo lỗi khi stream đã đóng.
+          try {
+            activeReader.reset();
+          } catch (stopError) {
+            console.warn("Không thể dừng camera:", stopError);
+          }
         }
 
       }
@@ -252,7 +261,17 @@ async function startScanner() {
   }
 }
 
-resetButton.addEventListener("click", startScanner);
+resetButton.addEventListener("click", () => {
+  if (reader) {
+    try {
+      reader.reset();
+    } catch (stopError) {
+      console.warn("Không thể dừng camera cũ:", stopError);
+    }
+  }
+
+  startScanner();
+});
 
 startScanner();
 
