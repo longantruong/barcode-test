@@ -154,9 +154,11 @@ async function startScanner() {
                 // KIỂM TRA BARCODE 14 SỐ
                 // ========================================
 
-                if (!/^\d{14}$/.test(code)) {
+                if (code.length !== 14 ||
+                    !/^[0-9]{14}$/.test(code)
+                ) {
 
-                    result.textContent = code;
+                    result.textContent = "";
 
                     statusText.textContent =
                         "Barcode phải gồm đúng 14 số";
